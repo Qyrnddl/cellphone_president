@@ -7,7 +7,7 @@
 <style>
   /* ============================================================
      설정 안내 (진행자용)
-     - PIN 코드: 아래 CONFIG.PIN 값을 바꾸면 됩니다. (기본: 0712)
+     - 터치하면 PIN 없이 바로 홈 화면으로 이동합니다.
      - 총무 휴대폰과 동일한 구조/스타일로 맞춘 버전입니다.
      ============================================================ */
   :root{
@@ -57,35 +57,6 @@
     color:var(--ink-dim); font-size:13px;
   }
   .hint .bar{width:110px; height:4px; background:var(--ink-dim); border-radius:3px; margin:10px auto 0;}
-
-  /* ---------- PIN 화면 ---------- */
-  #pin{
-    background-image:
-      linear-gradient(180deg, rgba(10,10,14,.55) 0%, rgba(10,10,14,.55) 100%),
-      var(--stadium-img);
-    background-size:cover;
-    background-position:center center;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    height:100%;
-  }
-  #pin .label{color:var(--ink); font-size:16px; margin-bottom:26px;}
-  #pin .dots{display:flex; gap:16px; margin-bottom:34px;}
-  #pin .pdot{width:14px; height:14px; border-radius:50%; border:1.5px solid var(--ink-dim);}
-  #pin .pdot.filled{background:var(--ink); border-color:var(--ink);}
-  #pin.shake .dots{animation:shake .35s;}
-  @keyframes shake{
-    0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)}
-    40%{transform:translateX(10px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)}
-  }
-  .keypad{display:grid; grid-template-columns:repeat(3,74px); gap:16px;}
-  .key{
-    width:74px; height:74px; border-radius:50%; background:rgba(255,255,255,.12);
-    color:var(--ink); font-size:26px; display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-  }
-  .key:active{background:rgba(255,255,255,.26);}
-  .key.ghost{background:transparent; cursor:default;}
-  .err{color:#ff5468; font-size:12.5px; height:16px; margin-top:6px;}
 
   /* ---------- 홈화면 (사진 배경) ---------- */
   #home{
@@ -199,20 +170,10 @@
 <div class="screen">
 
   <!-- ============ 잠금화면 ============ -->
-  <div id="lock" class="view active" onclick="goPin()">
+  <div id="lock" class="view active" onclick="goHome()">
     <div class="time" id="lock-time">--:--</div>
     <div class="date" id="lock-date">-</div>
     <div class="hint">터치 해서 잠금 해제<div class="bar"></div></div>
-  </div>
-
-  <!-- ============ PIN 화면 ============ -->
-  <div id="pin" class="view">
-    <div class="label">암호 입력</div>
-    <div class="dots" id="pin-dots">
-      <div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div>
-    </div>
-    <div class="err" id="pin-err"></div>
-    <div class="keypad" id="keypad"></div>
   </div>
 
   <!-- ============ 홈화면 ============ -->
@@ -372,8 +333,6 @@
 </div>
 
 <script>
-  const CONFIG = { PIN: "0712" }; // ← 진행자: 여기서 비밀번호 변경
-
   /* ---------------- 데이터 ---------------- */
   const calls = [
     { name:"한대한", date:"07/17 11:20", duration:"00:02:05", dir:"in" },
@@ -446,7 +405,6 @@
   });
 
   function goHome(){ setView('home','home'); }
-  function goPin(){ setView('pin','pin'); }
 
   function openApp(which){
     const map = { msg:'app-msg', call:'app-call', nav:'app-nav' };
@@ -496,44 +454,6 @@
       .some(v => v.style.display !== 'none');
     if(detailOpen) resetNav();
     else goHome();
-  }
-
-  /* ---------------- PIN 키패드 ---------------- */
-  let entered = "";
-  const keypad = document.getElementById('keypad');
-  const layout = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
-  layout.forEach(k=>{
-    const d = document.createElement('div');
-    d.className = 'key' + (k==='' ? ' ghost' : '');
-    d.textContent = k;
-    if(k!=='') d.onclick = ()=> pressKey(k);
-    keypad.appendChild(d);
-  });
-
-  function renderDots(){
-    document.querySelectorAll('#pin-dots .pdot').forEach((el,i)=>{
-      el.classList.toggle('filled', i < entered.length);
-    });
-  }
-  function pressKey(k){
-    if(k==='⌫'){ entered = entered.slice(0,-1); renderDots(); return; }
-    if(entered.length>=4) return;
-    entered += k;
-    renderDots();
-    if(entered.length===4){
-      setTimeout(()=>{
-        if(entered === CONFIG.PIN){
-          document.getElementById('pin-err').textContent = '';
-          entered = ""; renderDots();
-          goHome();
-        } else {
-          document.getElementById('pin-err').textContent = '암호가 틀렸습니다';
-          const pinView = document.getElementById('pin');
-          pinView.classList.add('shake');
-          setTimeout(()=>{ pinView.classList.remove('shake'); entered=""; renderDots(); }, 350);
-        }
-      }, 150);
-    }
   }
 
   /* ---------------- 메신저 내부 네비게이션 ---------------- */
